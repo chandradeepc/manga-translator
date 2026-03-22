@@ -24,25 +24,36 @@ EXTRACT_PROMPT = """\
 You are a manga translation expert. Analyze this manga page image carefully.
 
 For every piece of Japanese text visible on the page (speech bubbles, narration boxes,
-sound effects, signs, etc.), return a JSON array of objects with these fields:
+sound effects, signs, etc.), extract and translate it.
 
-- "original": the exact Japanese text
-- "translated": a natural, contextually appropriate English translation.
-  Use natural English speech patterns. Preserve tone (casual, formal, angry, etc).
-- "type": one of "speech", "narration", "sfx", "sign", "other"
-- "bbox": [y1, x1, y2, x2] coordinates in the range 0-1000, where 0,0 is the
-  top-left corner and 1000,1000 is the bottom-right corner.
-  The bbox should cover the ENTIRE writable area inside the speech bubble or text box —
-  not just tightly around the characters. Include generous padding so that the full
-  interior of the bubble/box is covered. This area will be erased and refilled with
-  English text, so it must be large enough.
-
-IMPORTANT:
-- Return ONLY the JSON array, no markdown fences, no explanation.
-- Coordinates are NORMALIZED 0-1000, not pixels.
+- Translate to natural English, preserving tone (casual, formal, angry, etc).
+- bbox coordinates are NORMALIZED 0-1000 (top-left 0,0; bottom-right 1000,1000).
+- bbox should cover the ENTIRE writable area inside the bubble/box, not just the text.
+  Make bounding boxes GENEROUS so the area can be erased and refilled with English.
 - Include ALL visible text, even small sound effects.
-- Make bounding boxes GENEROUS — cover the full interior area of bubbles/boxes.
 """
+
+RESPONSE_SCHEMA = types.Schema(
+    type="ARRAY",
+    items=types.Schema(
+        type="OBJECT",
+        properties={
+            "original": types.Schema(type="STRING", description="Exact Japanese text"),
+            "translated": types.Schema(type="STRING", description="Natural English translation"),
+            "type": types.Schema(
+                type="STRING",
+                description="Text type",
+                enum=["speech", "narration", "sfx", "sign", "other"],
+            ),
+            "bbox": types.Schema(
+                type="ARRAY",
+                description="Bounding box [y1, x1, y2, x2] in 0-1000 normalized coords",
+                items=types.Schema(type="INTEGER"),
+            ),
+        },
+        required=["original", "translated", "type", "bbox"],
+    ),
+)
 
 
 async def extract_and_translate(image_path: Path) -> list[dict]:
@@ -58,15 +69,12 @@ async def extract_and_translate(image_path: Path) -> list[dict]:
         ],
         config=types.GenerateContentConfig(
             temperature=0.2,
+            response_mime_type="application/json",
+            response_schema=RESPONSE_SCHEMA,
         ),
     )
 
-    raw = response.text.strip()
-    if raw.startswith("```"):
-        raw = raw.split("\n", 1)[1]
-        raw = raw.rsplit("```", 1)[0]
-
-    entries = json.loads(raw)
+    entries = json.loads(response.text)
 
     # Convert normalized 0-1000 coords [y1, x1, y2, x2] to pixel coords [x1, y1, x2, y2]
     padding = 5
