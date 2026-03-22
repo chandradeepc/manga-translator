@@ -338,28 +338,31 @@ async def process_volume(pages: list[Path], concurrency: int, pdf_path: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Translate manga volumes to English")
-    parser.add_argument("volume_folder", type=Path, help="Path to folder of manga page images")
-    parser.add_argument("-o", "--output", type=Path, default=None, help="Output PDF path")
-    parser.add_argument("-c", "--concurrency", type=int, default=10, help="Max concurrent API calls (default: 10)")
+    parser = argparse.ArgumentParser(
+        prog="translate",
+        description="Translate manga to English",
+        usage="uv run translate <folder> [-o out.pdf] [-c 100]",
+    )
+    parser.add_argument("folder", type=Path, help="Folder of manga page images")
+    parser.add_argument("-o", type=Path, default=None, help="Output PDF path (default: output/<folder>_en.pdf)")
+    parser.add_argument("-c", type=int, default=100, help="Concurrent API calls (default: 100)")
     args = parser.parse_args()
 
-    input_path = args.volume_folder
-    if not input_path.is_dir():
-        print(f"Expected a directory, got: {input_path}")
+    if not args.folder.is_dir():
+        print(f"Not a directory: {args.folder}")
         sys.exit(1)
 
-    pages = sorted(input_path.glob("*.jpg")) + sorted(input_path.glob("*.png"))
+    pages = sorted(args.folder.glob("*.jpg")) + sorted(args.folder.glob("*.png"))
     if not pages:
-        print(f"No .jpg or .png files found in {input_path}")
+        print(f"No images found in {args.folder}")
         sys.exit(1)
 
     output_dir = Path("output")
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    pdf_path = args.output or output_dir / f"{input_path.name}_en.pdf"
+    pdf_path = args.o or output_dir / f"{args.folder.name}_en.pdf"
 
-    asyncio.run(process_volume(pages, args.concurrency, pdf_path))
+    asyncio.run(process_volume(pages, args.c, pdf_path))
 
 
 if __name__ == "__main__":

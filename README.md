@@ -25,22 +25,13 @@ GEMINI_API_KEY=your_key_here
 
 ## Usage
 
-Translate a volume:
 ```bash
-uv run main.py path/to/manga/volume/
+uv run main.py ./my-manga-volume/
 ```
 
-Custom output path and concurrency:
-```bash
-uv run main.py path/to/manga/volume/ -o output/vol1_en.pdf -c 100
-```
+That's it. Outputs `output/my-manga-volume_en.pdf`.
 
-### Options
-
-| Flag | Default | Description |
-|------|---------|-------------|
-| `-o, --output` | `output/{folder}_en.pdf` | Output PDF path |
-| `-c, --concurrency` | `10` | Max concurrent Gemini API calls |
+Options: `-o out.pdf` for custom path, `-c 50` for concurrency (default 100).
 
 ## Output
 
