@@ -52,6 +52,14 @@ Progress is shown in the terminal:
 [████████████░░░░░░░░░░░░░░░░░░] 85/227 (2 failed) 3.2 pg/s | ETA 44s | 086.jpg: 8 regions [OK]
 ```
 
+## Examples
+
+![Speech bubbles](examples/samples/page_005.jpg)
+
+![Narration and dialogue](examples/samples/page_009.jpg)
+
+![Character names and action](examples/samples/page_010.jpg)
+
 ## Dependencies
 
 - [google-genai](https://pypi.org/project/google-genai/) — Gemini API client
