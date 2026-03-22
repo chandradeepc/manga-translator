@@ -43,6 +43,20 @@ Progress is shown in the terminal:
 [████████████░░░░░░░░░░░░░░░░░░] 85/227 (2 failed) 3.2 pg/s | ETA 44s | 086.jpg: 8 regions [OK]
 ```
 
+## Why this over other manga translators?
+
+Most manga translation tools (e.g. [MangaTranslator](https://github.com/meangrinch/MangaTranslator)) chain 5+ local models: YOLO for detection, SAM for segmentation, FLUX for inpainting, a separate OCR model, then an LLM for translation. They require a GPU, gigabytes of model downloads, and process pages sequentially.
+
+This project takes a different approach:
+
+- **One model does everything.** Gemini handles OCR, translation, and bounding box detection in a single API call. No model pipeline to configure or break.
+- **No GPU, no model downloads.** Runs on any machine with a Gemini API key. Nothing to install beyond 3 pip packages.
+- **Fast.** 649 pages in 4 minutes with 100 concurrent API calls. Most local pipelines take 1-2 minutes *per page*.
+- **One file, one command.** `uv run main.py ./folder/` — no web UI to spin up, no config files to edit.
+- **Structured output.** Uses Gemini's JSON schema mode so responses are guaranteed valid — no fragile regex parsing.
+
+The tradeoff: local tools use diffusion-based inpainting to reconstruct artwork behind text. This tool uses white fill, which works well for standard speech bubbles but won't match art-integrated text.
+
 ## Examples
 
 ![Speech bubbles](examples/samples/page_005.jpg)
