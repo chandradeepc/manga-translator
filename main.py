@@ -266,6 +266,9 @@ class Progress:
 # ── Concurrent processing ─────────────────────────────────────────────────────
 
 
+PAGE_TIMEOUT = 120  # seconds per page before giving up
+
+
 async def process_page_async(
     image_path: Path,
     semaphore: asyncio.Semaphore,
@@ -274,10 +277,20 @@ async def process_page_async(
     """Process a single page. Semaphore limits concurrency like p-queue."""
     async with semaphore:
         try:
-            entries = await extract_and_translate(image_path)
+            entries = await asyncio.wait_for(
+                extract_and_translate(image_path),
+                timeout=PAGE_TIMEOUT,
+            )
             img = erase_and_replace(image_path, entries)
             await progress.update(image_path.name, len(entries), success=True)
             return img
+        except asyncio.TimeoutError:
+            await progress.update(image_path.name, 0, success=False)
+            sys.stderr.write(f"\n  Timeout on {image_path.name} ({PAGE_TIMEOUT}s)\n")
+            try:
+                return Image.open(image_path).convert("RGB")
+            except Exception:
+                return None
         except Exception as e:
             await progress.update(image_path.name, 0, success=False)
             sys.stderr.write(f"\n  Error on {image_path.name}: {e}\n")
