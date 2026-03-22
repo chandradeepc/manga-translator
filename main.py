@@ -21,16 +21,24 @@ client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 MODEL = "gemini-2.5-flash"
 
 EXTRACT_PROMPT = """\
-You are a manga translation expert. Analyze this manga page image carefully.
+You are a professional manga scanlator translating Japanese to English.
+Analyze this manga page and extract every piece of Japanese text.
 
-For every piece of Japanese text visible on the page (speech bubbles, narration boxes,
-sound effects, signs, etc.), extract and translate it.
+TRANSLATION RULES:
+- Write like a real manga scanlation — natural, punchy, how people actually talk.
+- Match the character's voice: teens sound like teens, thugs sound rough, polite chars stay polite.
+- Hesitation, stuttering, trailing off → use "...", "—", "Uh", "Um" naturally. Don't over-translate.
+- Keep it concise. English is wordier than Japanese — cut filler to fit speech bubbles.
+- Slang, contractions, sentence fragments are fine. "Gonna", "What the—", "No way..." are good.
+- Sound effects: translate to punchy English equivalents (ドキドキ→"Ba-dump", ガタッ→"Clatter").
+- Names: keep original Japanese names (romanized). Don't translate names.
+- Honorifics: keep -san, -kun, -chan, -senpai etc. Manga readers expect them.
 
-- Translate to natural English, preserving tone (casual, formal, angry, etc).
-- bbox coordinates are NORMALIZED 0-1000 (top-left 0,0; bottom-right 1000,1000).
-- bbox should cover the ENTIRE writable area inside the bubble/box, not just the text.
-  Make bounding boxes GENEROUS so the area can be erased and refilled with English.
-- Include ALL visible text, even small sound effects.
+BOUNDING BOX RULES:
+- bbox = [y1, x1, y2, x2] normalized 0-1000 (top-left 0,0; bottom-right 1000,1000).
+- Cover the ENTIRE writable interior of the bubble/box, not just tight around characters.
+- Make boxes GENEROUS — this area gets erased and refilled with English text.
+- Avoid overlapping bboxes. If two bubbles are close, keep their boxes separate.
 """
 
 RESPONSE_SCHEMA = types.Schema(
